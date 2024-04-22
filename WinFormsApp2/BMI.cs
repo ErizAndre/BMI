@@ -9,24 +9,30 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using WinFormsApp2.Properties;
+using Newtonsoft.Json;
+using Newtonsoft;
 
 namespace WinFormsApp2
 {
     public partial class BMI : Form
     {
-        public string filePath = "Cred.json";
-        public List<UserCred> userData;
-        public class UserCred
+        public string filePath = "Bmidata.json";
+        public List<bmidata> bmi = new List<bmidata>();
+        public string remarks;
+        public class bmidata
         {
-            public string User { get; set; }
-            public string Pass { get; set; }
+            public string Name { get; set; }
+            public string BMI { get; set; }
+            public string Remarks { get; set; }
+            public string Height { get; set; }
+            public string Weight { get; set; }
         }
         private void LoadUserData()
         {
             if (File.Exists(filePath))
             {
                 string json = File.ReadAllText(filePath);
-                userData = JsonConvert.DeserializeObject<List<UserCred>>(json);
+                bmi = JsonConvert.DeserializeObject<List<bmidata>>(json);
             }
 
         }
@@ -54,10 +60,17 @@ namespace WinFormsApp2
 
         private void guna2Button2_Click(object sender, EventArgs e)
         {
-            var jsons = File.ReadAllText(filePath);
-            userData = JsonConvert.DeserializeObject<List<UserCred>>(jsons);
+            try
+            {
+                var jsons = File.ReadAllText(filePath);
+                bmi = JsonConvert.DeserializeObject<List<bmidata>>(jsons);
 
-            guna2DataGridView1.DataSource = userData;
+                guna2DataGridView1.DataSource = bmi;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Invalid Height or Weight");
+            }
         }
 
         private void guna2Button1_Click(object sender, EventArgs e)
@@ -66,38 +79,55 @@ namespace WinFormsApp2
             {
                 double height = double.Parse(txthei.Text);
                 double weight = double.Parse(txtwei.Text);
-                double bmi = calculateBMI(height, weight);
+                double bmis = calculateBMI(height, weight);
 
-                lblBMI.Text = bmi.ToString("F2");
+                lblBMI.Text = bmis.ToString("F2");
+                var strBMI = bmis.ToString("F2");
 
-                if (bmi < 18.5)
+
+                if (bmis < 18.5)
                 {
                     lblRemarks.Text = "Underweight";
-
+                    remarks = "Underweight";
+                    guna2PictureBox3.Image = Resources.underweight;
                 }
-                else if (bmi >= 18.5 && bmi <= 24.9)
+                else if (bmis >= 18.5 && bmis <= 24.9)
                 {
                     lblRemarks.Text = "Normal";
-
+                    remarks = "Normal";
+                    guna2PictureBox3.Image = Resources.normal;
                 }
-                else if (bmi >= 25 && bmi <= 29.5)
+                else if (bmis >= 25 && bmis <= 29.5)
                 {
                     lblRemarks.Text = "Overweight";
-
+                    remarks = "Overweight";
+                    guna2PictureBox3.Image = Resources.overweight;
                 }
-                else if (bmi > 30)
+                else if (bmis > 30)
                 {
                     lblRemarks.Text = "Obese";
-
+                    guna2PictureBox3.Image = Resources.obese;
                 }
-
-
-
+                var userCred = new bmidata
+                {
+                    Name = txtName.Text,
+                    Height = txthei.Text,
+                    Weight = txtwei.Text,
+                    BMI = strBMI,
+                    Remarks = strBMI
+                };
+                bmi.Add(userCred);
+                var json = JsonConvert.SerializeObject(bmi);
+                File.WriteAllText(filePath, json);
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Invalid Height or Weight");
             }
+
+
+            
+
 
         }
 
@@ -108,7 +138,12 @@ namespace WinFormsApp2
 
         private void guna2DataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
-            
+
+        }
+
+        private void label2_Click(object sender, EventArgs e)
+        {
+
         }
     }
 }
